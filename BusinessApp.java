@@ -47,6 +47,31 @@ public class BusinessApp {
             //     * Removes or adjusts the matching `Purchase` from the customer's `purchases` list
             //     * Ensures `saveData` will persist the change to `purchases.csv`
 
+            // TODO: Consider switching `purchases` from `ArrayList` to `LinkedList`.
+            // Reason: LinkedList gives O(1) insert/remove when adding/removing from ends or when
+            // using an iterator; useful if you expect many deletions/insertions in the middle.
+            // Steps:
+            //  - replace `new ArrayList<>()` with `new LinkedList<>()` in the constructor
+            //  - add `import java.util.LinkedList;` at the top
+            //  - update any code that relies on random access (get by index) if present
+
+            // TODO: Add Printable Receipt option
+            // - Store the printable receipt as a `LinkedList<String>` (or a small `ReceiptLine` object list)
+            // - Provide an option to build a receipt when a transaction completes
+            // - Allow adding headers/footers and inserting discounts (line or total-level)
+            // - Implement `printReceipt(LinkedList<String> receipt)` to output line-by-line
+            // - Save printable receipts if desired (optional: to a file or in-memory list)
+
+            // TODO: Add History Log (in-memory, save later)
+            // - Keep a running history of recent changes/purchases in a `LinkedList<String>`
+            // - Example usage:
+            //     LinkedList<String> historyLog = new LinkedList<>();
+            //     historyLog.add("Added customer ID 12345");
+            //     historyLog.add("Added purchase: Widget ($19.99)");
+            // - Persist this `historyLog` to a CSV file later via `saveHistory(String filename, LinkedList<String> historyLog)`
+            // - Use entries like: "timestamp,action,details" to make parsing easier
+
+            
             System.out.print("Enter choice: ");
             choice = sc.nextInt();
             sc.nextLine(); // consume newline
