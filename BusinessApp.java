@@ -20,69 +20,26 @@ import java.util.*;
 
 public class BusinessApp {
     public static void main(String[] args) throws Exception {
+        // load data from CSV files - HashMap for fast lookup by customerID (O(1) average time) - sends
         Map<Integer, Customer> customers = DataLoader.loadCustomers("customers.csv");
         DataLoader.loadPurchases("purchases.csv", customers);
 
-        Scanner sc = new Scanner(System.in);
-        int choice;
+        Scanner sc = new Scanner(System.in); // scanner for user input
+        int choice; // integer used for menu choice
 
         //execute the following code, until the user decides to exit
         do {
+            //display menu in terminal
             System.out.println("\n=== Business App Menu ===");
             System.out.println("1. Add Customer");
-            System.out.println("2. Search Customer by ID");
-            System.out.println("3. List All Customers");
-            System.out.println("4. View Purchase History");
-            System.out.println("5. Exit");
-            // TODO: Add Delete option
-            // - Add a menu entry (e.g. "7. Delete Customer" or renumber existing items)
-            // - Implement a method `deleteCustomer(Scanner sc, Map<Integer, Customer> customers)`
-            // - Validate ID exists, remove from the `customers` map, and optionally remove related purchases
-
-            // TODO: Add Transaction option
-            // - Add a menu entry for creating transactions (customer buys an item)
-            // - Implement `addTransaction(Scanner sc, Map<Integer, Customer> customers)` which:
-            //     * Prompts for Customer ID, product name, and price
-            //     * Adds a new `Purchase` to the customer's `purchases` list
-            //     * Marks data dirty / ensure `saveData` persists new transactions to `purchases.csv`
-
-            // TODO: Running total for purchase history (use recursion)
-            // - When selecting "4. View Purchase History", show a running total at the bottom
-            // - Implement a recursive helper like `double runningTotal(List<Purchase> list, int idx)` that sums prices
-            // - Display the total after listing purchases
-
-            // TODO: Add Return/Refund option
-            // - Add a menu entry for returning products
-            // - Implement `processReturn(Scanner sc, Map<Integer, Customer> customers)` which:
-            //     * Prompts for Customer ID, product name (or purchase index), and optionally refund amount
-            //     * Removes or adjusts the matching `Purchase` from the customer's `purchases` list
-            //     * Ensures `saveData` will persist the change to `purchases.csv`
-
-            // TODO: Consider switching `purchases` from `ArrayList` to `LinkedList`.
-            // Reason: LinkedList gives O(1) insert/remove when adding/removing from ends or when
-            // using an iterator; useful if you expect many deletions/insertions in the middle.
-            // Steps:
-            //  - replace `new ArrayList<>()` with `new LinkedList<>()` in the constructor
-            //  - add `import java.util.LinkedList;` at the top
-            //  - update any code that relies on random access (get by index) if present
-
-            // TODO: Add Printable Receipt option
-            // - Store the printable receipt as a `LinkedList<String>` (or a small `ReceiptLine` object list)
-            // - Provide an option to build a receipt when a transaction completes
-            // - Allow adding headers/footers and inserting discounts (line or total-level)
-            // - Implement `printReceipt(LinkedList<String> receipt)` to output line-by-line
-            // - Save printable receipts if desired (optional: to a file or in-memory list)
-
-            // TODO: Add History Log (in-memory, save later)
-            // - Keep a running history of recent changes/purchases in a `LinkedList<String>`
-            // - Example usage:
-            //     LinkedList<String> historyLog = new LinkedList<>();
-            //     historyLog.add("Added customer ID 12345");
-            //     historyLog.add("Added purchase: Widget ($19.99)");
-            // - Persist this `historyLog` to a CSV file later via `saveHistory(String filename, LinkedList<String> historyLog)`
-            // - Use entries like: "timestamp,action,details" to make parsing easier
-
+            System.out.println("2. Delete Customer");
+            System.out.println("3. Search Customer by ID");
+            System.out.println("4. List All Customers");
+            System.out.println("5. Add Transaction");
+            System.out.println("6. View Purchase History");
+            System.out.println("7. Exit");
             
+            //Prompt user for choice
             System.out.print("Enter choice: ");
             choice = sc.nextInt();
             sc.nextLine(); // consume newline
@@ -92,20 +49,26 @@ public class BusinessApp {
                     addCustomer(sc, customers);
                     break;
                 case 2:
-                    searchCustomer(sc, customers);
+                    deleteCustomer(sc, customers);
                     break;
                 case 3:
-                    listCustomers(customers);
+                    searchCustomer(sc, customers);
                     break;
                 case 4:
-                    viewPurchases(sc, customers);
+                    listCustomers(customers);
                     break;
                 case 5:
-                    System.out.print("Are you sure you want to exit? (Y/N): ");
-                    String confirm = sc.nextLine().trim().toLowerCase();
+                    addTransaction(sc, customers);
+                    break;
+                case 6:
+                    viewPurchases(sc, customers);
+                    break;
+                case 7:
+                    System.out.print("Are you sure you want to exit? (Y/N): "); // confirm exit
+                    String confirm = sc.nextLine().trim().toLowerCase(); // get user input and ignore case
                     if (confirm.equals("y") || confirm.equals("yes")) {
                         System.out.println("Goodbye!");
-                        // leave choice as 5 so the loop will exit
+                        // leave choice as 7 so the loop will exit
                     } else {
                         // set to a non-exit value so the loop continues
                         choice = 0;
@@ -113,10 +76,11 @@ public class BusinessApp {
                     break;
                 default:
                     System.out.println("Invalid choice.");
-            }
-        } while (choice != 5);
+            } // end switch
+        } while (choice != 7);
     }
 
+    // Add a new customer
     private static void addCustomer(Scanner sc, Map<Integer, Customer> customers) {
         System.out.print("Enter 5-digit Customer ID: ");
         int id = sc.nextInt(); sc.nextLine();
@@ -130,27 +94,52 @@ public class BusinessApp {
         Customer c = new Customer(id, lastName, firstName, phone);
         customers.put(id, c);
         System.out.println("Customer added!");
-        // Auto-save after adding customer
+        // Auto-save directly to CSV file after adding customer - bypass setters 
         saveData(customers);
-    }
+    } // end addCustomer
 
+    // Delete a customer by ID
+    private static void deleteCustomer(Scanner sc, Map<Integer, Customer> customers) {
+        System.out.print("Enter Customer ID to delete: ");
+        int id = sc.nextInt();
+        sc.nextLine(); // consume newline
+        Customer c = customers.get(id); // lookup customer by ID - O(1) average time because of HashMap
+        if (c != null) { // if customer exists
+            System.out.print("Are you sure you want to delete " + c.getFirstName() + " " + c.getLastName() + " (ID: " + id + ")? (Y/N): ");
+            String confirm = sc.nextLine().trim().toLowerCase();
+            if (confirm.equals("y") || confirm.equals("yes")) {
+                customers.remove(id);
+                System.out.println("Customer deleted.");
+                // Auto-save directly to CSV file after deleting customer - bypass setters 
+                saveData(customers);
+            } else {
+                System.out.println("Deletion cancelled.");
+            }
+        } else { // if customer does not exist
+            System.out.println("Customer not found.");
+        }
+    } // end deleteCustomer
+
+    // Search for a customer by ID
     private static void searchCustomer(Scanner sc, Map<Integer, Customer> customers) {
         System.out.print("Enter Customer ID: ");
         int id = sc.nextInt();
         Customer c = customers.get(id);
-        if (c != null) {
-            System.out.println("Found: " + c.getFirstName() + " " + c.getLastName() + " (" + c.getPhone() + ")");
-        } else {
+        if (c != null) { // if customer exists
+            System.out.println("Found: " + c.getFirstName() + " " + c.getLastName() + " (" + c.getPhone() + ")"); // display customer info
+        } else { // if customer does not exist
             System.out.println("Customer not found.");
         }
-    }
+    } // end searchCustomer
 
+    // List all customers
     private static void listCustomers(Map<Integer, Customer> customers) {
-        for (Customer c : customers.values()) {
+        for (Customer c : customers.values()) { // iterate through all customers - O(n)
             System.out.println(c.getCustomerID() + " - " + c.getFirstName() + " " + c.getLastName());
         }
-    }
+    } // end listCustomers
 
+    // View purchase history for a customer, with running total via recursion
     private static void viewPurchases(Scanner sc, Map<Integer, Customer> customers) {
         System.out.print("Enter Customer ID: ");
         int id = sc.nextInt();
@@ -160,11 +149,84 @@ public class BusinessApp {
             for (Purchase p : c.getPurchases()) {
                 System.out.println(" - " + p.getProductName() + " ($" + p.getPrice() + ")");
             }
+            // Compute and print running total using recursion
+            double total = runningTotal(c.getPurchases(), 0);
+            System.out.printf("Total: $%.2f\n", total);
         } else {
             System.out.println("Customer not found.");
         }
-    }
+    } // end viewPurchases
 
+    // Recursive helper that returns the sum of prices from index `idx` to end
+    private static double runningTotal(List<Purchase> list, int idx) {
+        if (list == null || idx >= list.size()) return 0.0;
+        Purchase p = list.get(idx);
+        return p.getPrice() + runningTotal(list, idx + 1);
+    } // end runningTotal
+
+    // Add a transaction for a customer
+    private static void addTransaction(Scanner sc, Map<Integer, Customer> customers) {
+        System.out.print("Enter Customer ID: ");
+        int id = sc.nextInt(); sc.nextLine();
+        Customer c = customers.get(id);
+        if (c != null) {
+            System.out.print("Enter product name: ");
+            String product = sc.nextLine();
+            System.out.print("Enter price: ");
+            double price = sc.nextDouble(); sc.nextLine();
+            c.addPurchase(new Purchase(product, price));
+            System.out.println("Transaction added: " + product + " ($" + price + ")");
+            // Build printable receipt for this transaction - LinkedList for easy line-by-line storage (O(n))
+            LinkedList<String> receipt = new LinkedList<>();
+            String timestamp = java.time.LocalDateTime.now().toString();
+            receipt.add("=== BusinessApp Receipt ===");
+            receipt.add("Timestamp: " + timestamp);
+            receipt.add("Customer: " + c.getFirstName() + " " + c.getLastName() + " (ID: " + c.getCustomerID() + ")");
+            receipt.add("");
+            receipt.add("Items:");
+            receipt.add(product + " - $" + String.format("%.2f", price));
+            
+            // apply optional discount (Why did I add this? idk but it's here now)
+            double discount = 0.0;
+            System.out.print("Apply discount? (Y/N): ");
+            String discChoice = sc.nextLine().trim().toLowerCase();
+            if (discChoice.equals("y") || discChoice.equals("yes")) {
+                System.out.print("Enter discount amount (dollars): ");
+                try {
+                    discount = sc.nextDouble(); sc.nextLine();
+                    receipt.add("Discount: -$" + String.format("%.2f", discount));
+                } catch (Exception e) {
+                    sc.nextLine(); // consume bad input
+                    System.out.println("Invalid discount, continuing without discount.");
+                    discount = 0.0;
+                }
+            }
+            // calculate total after discount
+            double total = price - discount;
+            if (total < 0) total = 0;
+            receipt.add("");
+            receipt.add("Total: $" + String.format("%.2f", total));
+            receipt.add("=== Thank you ===");
+
+            // Print receipt to console
+            printReceipt(receipt);
+
+            // Auto-save customers/purchases (do NOT save receipts to CSV)
+            saveData(customers);
+        } else {
+            System.out.println("Customer not found.");
+        }
+    } // end addTransaction
+
+    // Print receipt line-by-line to console - was going to eventually save to file that could be printed, but not implemented
+    private static void printReceipt(LinkedList<String> receipt) {
+        for (String line : receipt) {
+            System.out.println(line);
+        }
+    } // end printReceipt
+
+    // Save customers and purchases to CSV files (outdated method, now called directly in add/delete/transaction methods)
+    // keep this in case I want to batch save later
     private static void saveData(Map<Integer, Customer> customers) {
         try {
             DataLoader.saveCustomers("customers.csv", customers.values());
@@ -173,5 +235,5 @@ public class BusinessApp {
         } catch (java.io.IOException e) {
             System.out.println("Error saving data: " + e.getMessage());
         }
-    }
-}
+    } // end saveData
+} // end BusinessApp class

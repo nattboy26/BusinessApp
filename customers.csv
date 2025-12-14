@@ -1,4 +1,4 @@
-customerID,lastName,firstName,phone //Generated CSV file using algorithm which I prompted GPT-5 to create
+customerID,lastName,firstName,phone
 10000,Doe,John,555-1000
 10001,Smith,Jane,555-1001
 10002,Johnson,Bob,555-1002

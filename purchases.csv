@@ -1,4 +1,4 @@
-customerID,productName,price //Generated CSV file using algorithm which I prompted GPT-5 to create
+customerID,productName,price
 10000,Tablet,1129.96
 10000,Mouse,1214.9
 10000,Keyboard,602.72

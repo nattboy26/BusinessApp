@@ -20,9 +20,9 @@ public class Customer {
         this.firstName = firstName;
         this.phone = phone;
         this.purchases = new ArrayList<>();
-    }
+    } // end constructor
 
-    //getters - note, no setters, as i will not be modifying customer info for this project as of now
+    //getters - note, no setters, as i will be directly modifying the csv files, then reloading data
     public int getCustomerID() { return customerID; }
     public String getLastName() { return lastName; }
     public String getFirstName() { return firstName; }
@@ -31,5 +31,5 @@ public class Customer {
 
     public void addPurchase(Purchase p) {
         purchases.add(p);
-    }
-}
+    } // end addPurchase
+} // end Customer class
